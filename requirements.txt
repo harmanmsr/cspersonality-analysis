@@ -1,0 +1,3 @@
+tfx==1.21.0
+tensorflow-model-analysis==0.52.0
+jupyterlab

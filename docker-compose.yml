@@ -1,0 +1,11 @@
+# Untuk TEST LOKAL saja sebelum deploy ke Heroku.
+# Jalankan: PORT=8501 docker compose up --build
+# Model REST API   -> http://localhost:8501/v1/models/marketing-response-model
+# Prometheus metrics -> http://localhost:8501/monitoring/prometheus/metrics
+services:
+  tf-serving:
+    build: .
+    ports:
+      - "8501:8501"
+    environment:
+      - PORT=8501

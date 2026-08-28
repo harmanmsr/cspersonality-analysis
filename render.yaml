@@ -1,0 +1,19 @@
+# Render Blueprint config — deploy otomatis dari Dockerfile di root repo.
+# Cara pakai: push repo ini ke GitHub, lalu di Render Dashboard pilih
+# "New > Blueprint" dan arahkan ke repo ini. Render akan baca file ini otomatis.
+#
+# Kalau lebih suka setup manual lewat UI (tanpa file ini), itu juga bisa —
+# lihat DEPLOYMENT.md bagian B untuk langkahnya.
+
+services:
+  - type: web
+    name: cspersonality-marketing-response
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /v1/models/marketing-response-model
+    envVars:
+      - key: MODEL_NAME
+        value: marketing-response-model
+      - key: MODEL_BASE_PATH
+        value: /models

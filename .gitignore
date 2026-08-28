@@ -1,0 +1,65 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+.eggs/
+*.egg
+.Python
+build/
+dist/
+
+# --- Virtual environments ---
+venv/
+env/
+.venv/
+.env
+
+# --- Jupyter ---
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# --- TFX pipeline artifacts ---
+pipeline_root/
+.metadata/
+*.db
+*.sqlite
+*.sqlite3
+
+# --- Data (raw/intermediate, keep only what you intentionally commit) ---
+data/
+*.csv
+*.tfrecord
+*.parquet
+
+# --- Model artifacts ---
+serving_model/
+*.h5
+*.pb
+*.pkl
+saved_model/
+
+# --- Monitoring / logs ---
+monitoring/
+*.log
+logs/
+
+# --- Docker ---
+docker-compose.override.yml
+
+# --- OS / editor junk ---
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# --- Env / secrets ---
+.env.local
+*.pem
+*.key
+
+*.pt
+*.pth
+*.safetensors
+*.ckpt
