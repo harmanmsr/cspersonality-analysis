@@ -9,4 +9,6 @@ ENV MODEL_BASE_PATH=/models
 
 RUN chmod +x /usr/bin/tf_serving_entrypoint.sh
 
+EXPOSE 7860
+
 ENTRYPOINT ["/usr/bin/tf_serving_entrypoint.sh"]

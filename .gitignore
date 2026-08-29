@@ -1,65 +1,174 @@
-# --- Python ---
+# ============================================================
+# Official GitHub Python.gitignore template
+# https://github.com/github/gitignore/blob/main/Python.gitignore
+# ============================================================
+
+# Byte-compiled / optimized / DLL files
 __pycache__/
-*.py[cod]
-*.pyo
-*.egg-info/
-.eggs/
-*.egg
+*.py[codz]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
 .Python
 build/
+develop-eggs/
 dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
 
-# --- Virtual environments ---
-venv/
-env/
-.venv/
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py.cover
+*.lcov
+.hypothesis/
+.pytest_cache/
+cover/
+
+# Translations
+*.mo
+*.pot
+
+# Django stuff:
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Flask stuff:
+instance/
+.webassets-cache
+
+# Scrapy stuff:
+.scrapy
+
+# Sphinx documentation
+docs/_build/
+
+# PyBuilder
+.pybuilder/
+target/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# Environments
 .env
+.envrc
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
 
-# --- Jupyter ---
-.ipynb_checkpoints/
-*.ipynb_checkpoints
+# Spyder project settings
+.spyderproject
+.spyproject
 
-# --- TFX pipeline artifacts ---
+# Rope project settings
+.ropeproject
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# pytype static type analyzer
+.pytype/
+
+# Cython debug symbols
+cython_debug/
+
+# PyCharm
+# .idea/
+
+# Visual Studio Code
+# .vscode/
+
+# Temporary file for partial code execution
+tempCodeRunnerFile.py
+
+# Ruff stuff:
+.ruff_cache/
+
+# PyPI configuration file
+.pypirc
+
+# Streamlit
+.streamlit/secrets.toml
+
+
+# ============================================================
+# Project-specific: TFX pipeline / ML artifacts / deployment
+# ============================================================
+
+# TFX pipeline run artifacts (metadata, component outputs) —
+# regenerated every run, shouldn't live in git
 pipeline_root/
 .metadata/
 *.db
 *.sqlite
 *.sqlite3
 
-# --- Data (raw/intermediate, keep only what you intentionally commit) ---
+# Raw / intermediate data — keep only what you intentionally commit
 data/
-*.csv
 *.tfrecord
 *.parquet
+marketing_campaign.csv
 
-# --- Model artifacts ---
-serving_model/
-*.h5
-*.pb
-*.pkl
-saved_model/
-
-# --- Monitoring / logs ---
+# Monitoring output
 monitoring/
-*.log
 logs/
 
-# --- Docker ---
+# NOTE: serving_model/ is intentionally NOT ignored.
+# Dockerfile does `COPY ./serving_model/marketing-response-model /models/...`
+# at build time, so Render needs this folder committed to the repo
+# (or fetched via a build/entrypoint step) for the Docker build to succeed.
+# If the model grows too large for a normal git repo, use Git LFS instead
+# of ignoring it outright — don't just drop this folder from the .gitignore
+# without changing the Dockerfile/entrypoint.sh to fetch it another way.
+
+# Docker
 docker-compose.override.yml
 
-# --- OS / editor junk ---
+# OS / editor junk
 .DS_Store
 Thumbs.db
-.idea/
-.vscode/
-*.swp
 
-# --- Env / secrets ---
-.env.local
+# Secrets
 *.pem
 *.key
-
-*.pt
-*.pth
-*.safetensors
-*.ckpt

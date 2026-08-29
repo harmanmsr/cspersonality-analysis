@@ -83,7 +83,7 @@ Seluruh komponen dijalankan via `InteractiveContext` di dalam notebook `csperson
 cspersonality-analysis/
 ├── cspersonality-analysis.ipynb      # Notebook utama (seluruh pipeline + dokumentasi)
 ├── README.md                   # Dokumentasi proyek (file ini)
-├── DEPLOYMENT.md                # Panduan Kriteria 3 & 4: deploy Render + monitoring Prometheus
+├── DEPLOYMENT.md                # Panduan Kriteria 3 & 4: deploy Hugging Face Spaces + monitoring Prometheus
 ├── marketing_transform.py      # Modul preprocessing untuk komponen Transform
 ├── marketing_tuner.py          # Modul hyperparameter tuning untuk komponen Tuner
 ├── marketing_trainer.py        # Modul arsitektur & training untuk komponen Trainer
@@ -93,9 +93,10 @@ cspersonality-analysis/
 ├── pipeline_root/               # Artefak/metadata seluruh komponen TFX
 ├── serving_model/
 │   └── marketing-response-model/  # Model final hasil Pusher
-├── Dockerfile                   # Image TF Serving (serving murni, dipakai untuk deploy ke Render)
+├── Dockerfile                   # Image TF Serving (serving murni; versi untuk Render/Heroku, port dinamis $PORT)
 ├── entrypoint.sh                 # Script start TF Serving (port dinamis + monitoring aktif)
-├── render.yaml                   # Blueprint config untuk deploy otomatis ke Render (opsional)
+├── render.yaml                   # Blueprint config untuk deploy ke Render (opsional/alternatif)
+├── huggingface-space/            # Folder terpisah untuk deploy ke Hugging Face Spaces (platform utama, gratis tanpa kartu kredit)
 ├── docker-compose.yml            # Test image secara lokal
 ├── .dockerignore
 ├── config/
@@ -108,7 +109,7 @@ cspersonality-analysis/
 ## 8. Kriteria 3 & 4 — Cloud Deployment & Monitoring
 
 Sesuai submission ini, sistem juga dijalankan pada environment cloud
-(**Render**, via Docker/TF Serving) dan dipantau menggunakan **Prometheus**
+(**Hugging Face Spaces**, via Docker/TF Serving) dan dipantau menggunakan **Prometheus**
 lewat endpoint metrics bawaan TF Serving (`/monitoring/prometheus/metrics`).
 
 Langkah lengkap deployment dan monitoring ada di **[`DEPLOYMENT.md`](./DEPLOYMENT.md)**.

@@ -1,16 +1,16 @@
-# Kriteria 3 & 4: Deployment ke Cloud (Render) & Monitoring (Prometheus)
+# Kriteria 3 & 4: Deployment ke Cloud (Hugging Face Spaces) & Monitoring (Prometheus)
 
 Panduan ini melanjutkan dari model yang sudah di-push oleh komponen `Pusher`
 (folder `serving_model/marketing-response-model/`).
 
-Kita pakai **Render** (bukan Heroku) karena Render masih punya free tier
-tanpa kartu kredit untuk web service berbasis Docker — cocok untuk
-kebutuhan submission ini.
+Kita pakai **Hugging Face Spaces** (bukan Heroku/Render) karena benar-benar
+gratis dan **tidak memerlukan kartu kredit sama sekali** untuk deploy Docker
+container — cocok untuk kebutuhan submission ini.
 
 Prasyarat di komputer kamu:
 - [Docker](https://www.docker.com/) sudah terinstal dan berjalan (untuk test lokal)
-- Akun [Render](https://render.com/) (gratis, daftar pakai email/GitHub)
-- Repo project ini sudah di-push ke **GitHub** (Render deploy dari Git repo, bukan dari CLI push image seperti Heroku)
+- Akun [Hugging Face](https://huggingface.co/) (gratis, tanpa kartu kredit)
+- `git` terinstal (Spaces adalah repo Git tersendiri)
 
 ---
 
@@ -57,70 +57,80 @@ notebook) bahwa serving benar-benar berfungsi untuk inference, bukan cuma
 
 ---
 
-## Bagian B — Deploy ke Render (Kriteria 3)
+## Bagian B — Deploy ke Hugging Face Spaces (Kriteria 3)
 
-Render men-deploy langsung dari repo Git (bukan push image lewat CLI seperti
-Heroku), dan otomatis mendeteksi `Dockerfile` di root project.
+Render sekarang meminta info kartu kredit untuk sign up, jadi kita pakai
+**Hugging Face Spaces** — mendukung custom Docker container, gratis, dan
+**tidak butuh kartu kredit sama sekali**.
 
-### B.1 — Push project ke GitHub
+Spaces adalah repo Git tersendiri (terpisah dari repo GitHub project utama),
+jadi file-file untuk keperluan ini sudah disiapkan di subfolder khusus:
+**`huggingface-space/`** — isinya `Dockerfile`, `entrypoint.sh`, `config/`,
+`serving_model/`, dan `README.md` (dengan metadata khusus HF Spaces).
 
-Kalau project ini belum ada di GitHub:
+> **Kenapa folder terpisah?** HF Spaces mewajibkan container listen di
+> **port 7860 tetap** (bukan `$PORT` dinamis seperti Render/Heroku), dan
+> butuh `README.md` dengan YAML frontmatter khusus di baris paling atas
+> untuk konfigurasi Space. Supaya tidak bentrok dengan `README.md` &
+> `Dockerfile` project utama, dipisah ke folder sendiri.
+
+### B.1 — Buat Space baru
+
+1. Daftar/login ke [huggingface.co](https://huggingface.co/) (gratis, tanpa kartu kredit)
+2. Klik profil kamu → **New Space**
+3. Isi:
+   - **Space name**: misal `cspersonality-model-api`
+   - **License**: bebas, misal `mit`
+   - **Space SDK**: pilih **Docker** → template **Blank**
+   - **Space hardware**: **CPU basic — Free**
+   - **Visibility**: Public atau Private (keduanya gratis)
+4. Klik **Create Space**
+
+### B.2 — Push isi folder `huggingface-space/` ke Space
+
+Setiap Space punya repo Git sendiri. Clone repo kosong itu, lalu isi dengan
+file dari folder `huggingface-space/`:
+
 ```bash
-cd cspersonality-analysis
-git init
+git clone https://huggingface.co/spaces/<username-hf>/cspersonality-model-api
+cd cspersonality-model-api
+
+# Copy semua isi folder huggingface-space/ dari project kamu ke sini
+# (Dockerfile, entrypoint.sh, config/, serving_model/, README.md)
+
 git add .
-git commit -m "Initial commit: TFX pipeline + serving"
-# Buat repo baru di GitHub dulu (lewat website), lalu:
-git remote add origin https://github.com/<username-github>/cspersonality-analysis.git
-git branch -M main
-git push -u origin main
+git commit -m "Deploy TF Serving model"
+git push
 ```
 
-> **Penting:** folder `pipeline_root/` dan `data/` berisi file yang cukup
-> besar. Kalau ukurannya bikin push lambat/gagal, tambahkan ke `.gitignore`
-> — file itu tidak dibutuhkan untuk deployment, karena Dockerfile hanya
-> meng-copy folder `serving_model/` (lihat isi `Dockerfile`).
+> Kalau `git push` minta login, gunakan **access token** dari
+> [huggingface.co/settings/tokens](https://huggingface.co/settings/tokens)
+> sebagai password (bukan password akun biasa).
 
-### B.2 — Buat Web Service di Render
-
-1. Login ke [dashboard.render.com](https://dashboard.render.com/)
-2. Klik **New +** → **Web Service**
-3. Hubungkan akun GitHub kamu (kalau belum), lalu pilih repo `cspersonality-analysis`
-4. Render otomatis mendeteksi `Dockerfile` di root — biarkan **Language/Runtime** ter-set ke **Docker**
-5. Isi konfigurasi:
-   - **Name**: `cspersonality-marketing-response` (atau nama lain, ini jadi bagian dari URL)
-   - **Region**: pilih yang terdekat (misal Singapore)
-   - **Instance Type**: pilih **Free**
-6. Klik **Create Web Service**
-
-Render akan build image dari `Dockerfile` dan deploy otomatis. Proses ini
-bisa memakan waktu beberapa menit (base image `tensorflow/serving` cukup besar).
-
-> Alternatif: kalau sudah familiar dengan Render Blueprint, cukup jalankan
-> **New +** → **Blueprint**, arahkan ke repo ini — Render akan otomatis
-> membaca `render.yaml` yang sudah disiapkan di root project.
+Setelah push, buka tab **Space** kamu di huggingface.co — Space akan
+otomatis build dari `Dockerfile` (proses build bisa beberapa menit karena
+base image `tensorflow/serving` cukup besar). Progress build bisa dilihat
+di tab **Logs**.
 
 ### B.3 — Verifikasi model bisa diakses dari cloud
 
-Setelah deploy selesai (status **Live** di dashboard Render), URL app kamu
-akan berbentuk:
+Setelah build selesai dan status Space **Running**, URL model kamu:
 ```
-https://cspersonality-marketing-response.onrender.com
+https://<username-hf>-cspersonality-model-api.hf.space
 ```
 
 Cek dengan:
 ```bash
-curl https://cspersonality-marketing-response.onrender.com/v1/models/marketing-response-model
+curl https://<username-hf>-cspersonality-model-api.hf.space/v1/models/marketing-response-model
 ```
 Response yang diharapkan berisi status `"state": "AVAILABLE"`.
 
 **📸 Screenshot ini** (atau buka URL-nya langsung di browser) adalah bukti
 utama untuk Kriteria 3.
 
-> **Catatan cold start:** Render free tier meng-*sleep*-kan service setelah
-> ~15 menit idle. Request pertama setelah idle bisa lambat (30-60 detik)
-> karena container harus "bangun" dulu — ini normal untuk free tier, bukan
-> error.
+> **Catatan sleep**: Space CPU gratis akan sleep setelah idle dalam waktu
+> tertentu (biasanya ~48 jam tanpa aktivitas).
+> Buka URL-nya dulu untuk "membangunkan" Space sebelum verifikasi/testing.
 
 ---
 
@@ -131,14 +141,14 @@ yang sudah kita aktifkan lewat `config/prometheus.config` dan
 `--monitoring_config_file` di `entrypoint.sh`. Prometheus tinggal
 di-arahkan untuk men-scrape endpoint itu.
 
-1. Edit `monitoring/prometheus.yml`, isi target dengan URL Render app kamu:
+1. Edit `monitoring/prometheus.yml`, isi target dengan URL Hugging Face Space kamu:
    ```yaml
    scrape_configs:
      - job_name: 'tf-serving-marketing-model'
        metrics_path: /monitoring/prometheus/metrics
        scheme: https
        static_configs:
-         - targets: ['cspersonality-marketing-response.onrender.com']
+         - targets: ['<username-hf>-cspersonality-model-api.hf.space']
    ```
 
 2. Jalankan Prometheus (lokal, memantau app di cloud):
@@ -162,8 +172,8 @@ di-arahkan untuk men-scrape endpoint itu.
 5. **Screenshot dashboard ini** (target status `up`, dan minimal satu grafik
    metrik) untuk dilampirkan sebagai bukti submission Kriteria 4.
 
-> **Catatan:** karena app Render free tier bisa sleep saat idle, pastikan
-> kamu buka/`curl` URL app-nya dulu (supaya "bangun") sebelum menjalankan
+> **Catatan:** karena Space CPU gratis bisa sleep saat idle, pastikan
+> kamu buka/`curl` URL Space-nya dulu (supaya "bangun") sebelum menjalankan
 > Prometheus, supaya scrape pertama tidak gagal karena cold start.
 
 ---
@@ -175,7 +185,7 @@ di-arahkan untuk men-scrape endpoint itu.
 | `Dockerfile` | Membungkus TF Serving + model jadi image (serving murni, bukan Jupyter) |
 | `entrypoint.sh` | Menjalankan TF Serving dengan `$PORT` dinamis + mengaktifkan monitoring |
 | `config/prometheus.config` | Mengaktifkan endpoint `/monitoring/prometheus/metrics` di TF Serving |
-| `render.yaml` | Blueprint config untuk deploy otomatis ke Render (opsional, bisa juga setup manual lewat dashboard) |
+| `huggingface-space/` | Folder terpisah berisi `Dockerfile`, `entrypoint.sh`, `config/`, `serving_model/`, dan `README.md` (dengan metadata Space) — isinya di-push sebagai repo Git Hugging Face Space tersendiri |
 | `docker-compose.yml` | Test image secara lokal sebelum deploy |
 | `.dockerignore` | Mengecualikan file besar/tidak perlu (notebook, data mentah, artefak pipeline) dari image |
 | `test_serving_prediction.ipynb` | Notebook terpisah untuk menguji prediction request ke model yang di-serve |
@@ -184,17 +194,27 @@ di-arahkan untuk men-scrape endpoint itu.
 
 ## Troubleshooting Umum
 
-- **Build gagal di Render**: cek tab **Logs** di dashboard Render untuk pesan error spesifik. Penyebab umum: file `entrypoint.sh` tidak ikut ter-push ke GitHub, atau `serving_model/` belum ter-generate (jalankan ulang pipeline TFX dulu sebelum push).
-- **App status "Deploy failed" atau crash setelah deploy**: cek apakah `$PORT` benar-benar terbaca — Render *mewajibkan* app listen di port yang diberikan lewat env var `$PORT` (default 10000), bukan port tetap. `entrypoint.sh` kita sudah menangani ini otomatis.
-- **Request pertama lambat/timeout**: kemungkinan besar cold start (service baru "bangun" dari sleep) — tunggu sebentar lalu coba lagi, bukan berarti error.
-- **Prometheus menunjukkan target `down`**: pastikan URL di `monitoring/prometheus.yml` benar, memakai `https`, tanpa trailing slash di akhir target, dan app Render-nya sedang tidak dalam kondisi sleep.
+- **Build gagal di HF Spaces**: cek tab **Logs** di halaman Space untuk pesan error spesifik. Penyebab umum: `serving_model/` belum ikut ter-push (jalankan ulang pipeline TFX dulu, lalu copy ulang ke `huggingface-space/serving_model/` sebelum push), atau README.md kehilangan YAML frontmatter di baris paling atas.
+- **Space status "Runtime error" atau crash**: cek apakah container benar-benar listen di port **7860** — HF Spaces tidak menerima port lain. `entrypoint.sh` di folder `huggingface-space/` sudah di-hardcode ke 7860.
+- **Request pertama lambat/timeout**: kemungkinan besar cold start (Space baru "bangun" dari sleep) — tunggu sebentar lalu coba lagi, bukan berarti error.
+- **Prometheus menunjukkan target `down`**: pastikan URL di `monitoring/prometheus.yml` benar (format `<username>-<space-name>.hf.space`), memakai `https`, tanpa trailing slash, dan Space-nya sedang tidak dalam kondisi sleep.
 - **Push ke GitHub lambat/gagal karena ukuran repo**: tambahkan `pipeline_root/` dan `data/` ke `.gitignore` — keduanya tidak dibutuhkan Dockerfile untuk deployment.
 
-## Alternatif: Deploy via Heroku
+## Alternatif: Deploy via Render atau Heroku (kalau punya kartu kredit)
 
-Kalau suatu saat kamu tetap ingin/perlu pakai Heroku (misalnya untuk
-konsistensi dengan latihan kelas yang eksplisit menyebut Heroku), alur
-kerjanya mirip tapi pakai Heroku Container Registry alih-alih Git push:
+Kalau suatu saat kamu ingin/perlu pakai platform lain (misalnya untuk
+konsistensi dengan latihan kelas yang menyebut Heroku, atau ingin coba
+Render), `Dockerfile` dan `entrypoint.sh` di **root project** (bukan yang
+di folder `huggingface-space/`) sudah disiapkan untuk keduanya — karena
+sama-sama menyuntikkan `$PORT` secara dinamis (beda dengan HF Spaces yang
+fixed di port 7860).
+
+**Render** (perlu kartu kredit untuk sign up per kebijakan terbaru):
+1. Push project ke GitHub
+2. Buat **Web Service** baru di [dashboard.render.com](https://dashboard.render.com/), hubungkan repo, pilih runtime **Docker**, plan **Free**
+3. Render otomatis baca `render.yaml` di root project kalau deploy lewat **Blueprint**
+
+**Heroku** (berbayar, mulai ~$5/bulan Eco Dyno):
 ```bash
 heroku login
 heroku container:login
@@ -202,6 +222,3 @@ heroku create <nama-app>
 heroku container:push web --app <nama-app>
 heroku container:release web --app <nama-app>
 ```
-`Dockerfile` dan `entrypoint.sh` yang sama bisa dipakai untuk kedua platform
-tanpa perubahan, karena keduanya sama-sama menyuntikkan `$PORT` secara
-dinamis.
