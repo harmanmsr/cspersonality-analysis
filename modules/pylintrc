@@ -1,0 +1,6 @@
+[MESSAGES CONTROL]
+# E1101 (no-member) dinonaktifkan khusus untuk tf.keras: TensorFlow memakai
+# lazy-loading module sehingga pylint tidak bisa menganalisis atribut
+# tf.keras.* secara statis -- ini false positive yang dikenal luas,
+# bukan indikasi masalah kode sesungguhnya.
+disable=no-member,duplicate-code

@@ -81,38 +81,95 @@ Seluruh komponen dijalankan via `InteractiveContext` di dalam notebook `csperson
 
 ```
 cspersonality-analysis/
-├── cspersonality-analysis.ipynb      # Notebook utama (seluruh pipeline + dokumentasi)
-├── README.md                   # Dokumentasi proyek (file ini)
-├── DEPLOYMENT.md                # Panduan Kriteria 3 & 4: deploy Hugging Face Spaces + monitoring Prometheus
-├── marketing_transform.py      # Modul preprocessing untuk komponen Transform
-├── marketing_tuner.py          # Modul hyperparameter tuning untuk komponen Tuner
-├── marketing_trainer.py        # Modul arsitektur & training untuk komponen Trainer
-├── test_serving_prediction.ipynb  # Notebook uji prediction request ke model serving
+├── cspersonality-analysis.ipynb   # Notebook utama (seluruh pipeline + dokumentasi), SUDAH DIJALANKAN
+├── HarmanM-testing.ipynb          # Notebook uji prediction request ke model serving
+├── README.md                      # Dokumentasi proyek (file ini)
+├── DEPLOYMENT.md                  # Panduan Kriteria 3 & 4: deploy Railway + monitoring Prometheus
+├── requirements.txt               # Daftar dependency Python
+├── marketing_transform.py         # Modul preprocessing (salinan kerja, versi resmi ada di modules/)
+├── marketing_tuner.py             # Modul hyperparameter tuning (salinan kerja, versi resmi ada di modules/)
+├── marketing_trainer.py           # Modul arsitektur & training (salinan kerja, versi resmi ada di modules/)
+├── modules/                       # Wajib: seluruh modul pipeline (Saran 1 - Tuner)
+│   ├── marketing_transform.py
+│   ├── marketing_tuner.py
+│   ├── marketing_trainer.py
+│   ├── .pylintrc
+│   └── README.md
+├── HarmanM-pipeline/               # Wajib: direktori berisi seluruh komponen ML pipeline (artefak TFX)
 ├── data/
 │   └── marketing_campaign_clean.csv
-├── pipeline_root/               # Artefak/metadata seluruh komponen TFX
 ├── serving_model/
 │   └── marketing-response-model/  # Model final hasil Pusher
-├── Dockerfile                   # Image TF Serving (serving murni; versi untuk Render/Heroku, port dinamis $PORT)
-├── entrypoint.sh                 # Script start TF Serving (port dinamis + monitoring aktif)
-├── render.yaml                   # Blueprint config untuk deploy ke Render (opsional/alternatif)
-├── huggingface-space/            # Folder terpisah untuk deploy ke Hugging Face Spaces (platform utama, gratis tanpa kartu kredit)
-├── docker-compose.yml            # Test image secara lokal
+├── Dockerfile                     # Wajib: untuk menjalankan sistem ML di cloud (dipakai deploy ke Railway)
+├── entrypoint.sh                   # Script start TF Serving (port dinamis + monitoring aktif)
+├── docker-compose.yml              # Test image secara lokal
 ├── .dockerignore
-├── config/
-│   └── prometheus.config         # Mengaktifkan endpoint metrics TF Serving
-└── monitoring/
-    ├── prometheus.yml                    # Scrape config Prometheus
-    └── docker-compose.prometheus.yml     # Menjalankan Prometheus server lokal
+├── monitoring/                     # Wajib: seluruh kebutuhan Prometheus
+│   ├── Dockerfile                  # Wajib: untuk menjalankan Prometheus
+│   ├── prometheus.config           # Mengaktifkan endpoint metrics TF Serving (dipakai juga oleh root Dockerfile)
+│   ├── prometheus.yml
+│   └── docker-compose.prometheus.yml
+├── render.yaml                     # Opsional: alternatif deploy ke Render
+└── huggingface-space/               # Opsional: alternatif deploy ke Hugging Face Spaces (tidak dipakai)
 ```
 
-## 8. Kriteria 3 & 4 — Cloud Deployment & Monitoring
+**Screenshot yang perlu dilampirkan terpisah (bukan di dalam folder ini):**
+- `HarmanM-deployment.png` — bukti model bisa diakses dari cloud (Railway)
+- `HarmanM-monitoring.png` — dashboard Prometheus (target status UP)
+- `HarmanM-pylint.png` — hasil `pylint modules/`
+- `HarmanM-grafana-dashboard.png` — hanya jika menerapkan saran ke-4 (Grafana)
 
-Sesuai submission ini, sistem juga dijalankan pada environment cloud
-(**Hugging Face Spaces**, via Docker/TF Serving) dan dipantau menggunakan **Prometheus**
-lewat endpoint metrics bawaan TF Serving (`/monitoring/prometheus/metrics`).
+## 8. Model Deployment & Monitoring (Kriteria 3 & 4)
 
-Langkah lengkap deployment dan monitoring ada di **[`DEPLOYMENT.md`](./DEPLOYMENT.md)**.
+### 8.1 Opsi Platform Deployment
+
+Beberapa platform cloud dipertimbangkan untuk menjalankan sistem ini (via
+Docker/TF Serving), dengan pertimbangan utama: gratis dan tidak memerlukan
+kartu kredit untuk keperluan submission ini.
+
+| Platform | Hasil evaluasi |
+|---|---|
+| Heroku | Sudah tidak punya free tier sejak 2022 — berbayar (~$5/bulan) |
+| Render | Free tier tersedia, tapi sign up sekarang mewajibkan info kartu kredit |
+| Hugging Face Spaces | Gratis, tanpa kartu kredit — sempat disiapkan (lihat folder `huggingface-space/`), tapi butuh port tetap (7860) dan struktur repo Git terpisah |
+| **Railway** ✅ | **Dipilih** — free trial credit ($5/30 hari) tanpa kartu kredit di awal, deploy langsung dari GitHub repo, mendukung port dinamis via `$PORT` (sama seperti Dockerfile yang sudah disiapkan) |
+
+**Platform yang dipakai: Railway.** Sistem di-deploy dari `Dockerfile` di
+root project (base image `tensorflow/serving`), yang menjalankan TF Serving
+dan meng-expose REST API serta endpoint monitoring Prometheus bawaan
+(`/monitoring/prometheus/metrics`).
+
+### 8.2 Tautan Web App
+
+**🔗 Tautan yang sudah dideploy (bisa langsung diakses/diverifikasi):**
+
+| Endpoint | URL |
+|---|---|
+| Model status | https://cspersonality-analysis-production.up.railway.app/v1/models/marketing-response-model |
+| Prometheus metrics (TF Serving) | https://cspersonality-analysis-production.up.railway.app/monitoring/prometheus/metrics |
+| Prediction endpoint (POST) | https://cspersonality-analysis-production.up.railway.app/v1/models/marketing-response-model:predict |
+
+Cek cepat via `curl`:
+```bash
+curl https://cspersonality-analysis-production.up.railway.app/v1/models/marketing-response-model
+```
+Response yang diharapkan: `"state": "AVAILABLE"` (lihat screenshot `HarmanM-deployment.png`).
+
+### 8.3 Hasil Monitoring
+
+Prometheus dijalankan secara lokal (`monitoring/docker-compose.prometheus.yml`),
+mengambil data dari endpoint `/monitoring/prometheus/metrics` milik TF
+Serving yang berjalan di Railway, dengan scrape interval 15 detik.
+
+**Hasil yang diamati** (lihat screenshot `HarmanM-monitoring.png`):
+- **`up{job="tf-serving-marketing-model"}` = 1** — target berhasil di-scrape secara konsisten (status **UP**), menandakan endpoint model di Railway aktif dan bisa dijangkau Prometheus sepanjang waktu observasi.
+- **`:tensorflow:core:graph_runs`** — metrik bawaan TF Serving yang menghitung jumlah eksekusi graph model; grafik menunjukkan aktivitas eksekusi bertambah setiap ada request masuk ke model (misalnya saat dites lewat `curl` atau notebook `HarmanM-testing.ipynb`), membuktikan monitoring benar-benar menangkap aktivitas nyata model, bukan cuma status hidup/mati.
+
+Kesimpulan: sistem yang di-deploy ke Railway berhasil dipantau end-to-end
+lewat Prometheus tanpa komponen tambahan (exporter terpisah), karena
+memanfaatkan endpoint monitoring bawaan TF Serving.
+
+Langkah setup lengkap ada di **[`DEPLOYMENT.md`](./DEPLOYMENT.md)**.
 
 ## 9. Perbaikan Berdasarkan Saran Reviewer (Kriteria 1 & 2)
 
@@ -122,7 +179,7 @@ Langkah lengkap deployment dan monitoring ada di **[`DEPLOYMENT.md`](./DEPLOYMEN
 | 2. Model deployment dengan TF Serving (Dockerfile + screenshot) | ✅ Dilengkapi | `Dockerfile` di root project murni untuk serving model (bukan host Jupyter) — lihat `DEPLOYMENT.md` bagian A untuk cara test lokal & mengambil screenshot bukti |
 | 3. Notebook uji prediction request | ✅ Ditambahkan | `test_serving_prediction.ipynb` — mengirim request ke endpoint `:predict` dan menampilkan hasil prediksi |
 
-## 9. Potensi Pengembangan Lanjutan
+## 10. Potensi Pengembangan Lanjutan
 
 - Menambahkan orkestrasi produksi (Apache Beam/Airflow/Kubeflow) menggantikan `InteractiveContext` yang bersifat eksperimental/lokal.
 - Eksperimen arsitektur model lain (misalnya Gradient Boosted Trees) dan hyperparameter tuning menggunakan komponen `Tuner`.
