@@ -1,18 +1,4 @@
 feature {
-  name: "Education"
-  type: BYTES
-  domain: "Education"
-  presence {
-    min_fraction: 1.0
-    min_count: 1
-  }
-  shape {
-    dim {
-      size: 1
-    }
-  }
-}
-feature {
   name: "AcceptedCmp1"
   type: INT
   bool_domain {
@@ -118,6 +104,20 @@ feature {
 feature {
   name: "Customer_Tenure_Days"
   type: INT
+  presence {
+    min_fraction: 1.0
+    min_count: 1
+  }
+  shape {
+    dim {
+      size: 1
+    }
+  }
+}
+feature {
+  name: "Education"
+  type: BYTES
+  domain: "Education"
   presence {
     min_fraction: 1.0
     min_count: 1

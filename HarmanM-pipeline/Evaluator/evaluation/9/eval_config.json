@@ -39,6 +39,6 @@
   "dataLocation": "<user provided PCollection>",
   "fileFormat": "<unknown>",
   "modelLocations": {
-    "": "HarmanM-pipeline/Trainer/model/7/Format-Serving"
+    "": "HarmanM-pipeline/Trainer/model/8/Format-Serving"
   }
 }
