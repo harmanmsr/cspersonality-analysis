@@ -1,3 +1,4 @@
+#!/bin/bash
 set -e
 
 PORT="${PORT:-8501}"

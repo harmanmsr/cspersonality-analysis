@@ -58,8 +58,9 @@ def _build_keras_model():
     cat_embeddings = []
     for f in CATEGORICAL_FEATURES:
         emb = tf.keras.layers.Embedding(
-            input_dim=CATEGORICAL_VOCAB_SIZE[f], output_dim=4)(categorical_inputs[transformed_name(f)])
-        emb = tf.keras.layers.Flatten()(emb)
+            input_dim=CATEGORICAL_VOCAB_SIZE[f], output_dim=4,
+            name=f'embedding_{f}')(categorical_inputs[transformed_name(f)])
+        emb = tf.keras.layers.Flatten(name=f'flatten_{f}')(emb)
         cat_embeddings.append(emb)
 
     concat = tf.keras.layers.Concatenate()([numeric_concat] + cat_embeddings)
