@@ -1,0 +1,53 @@
+{
+  "evalConfig": {
+    "modelSpecs": [
+      {
+        "name": "candidate",
+        "labelKey": "Response"
+      },
+      {
+        "name": "baseline",
+        "labelKey": "Response",
+        "isBaseline": true
+      }
+    ],
+    "slicingSpecs": [
+      {}
+    ],
+    "metricsSpecs": [
+      {
+        "metrics": [
+          {
+            "className": "ExampleCount"
+          },
+          {
+            "className": "BinaryAccuracy"
+          },
+          {
+            "className": "AUC",
+            "threshold": {
+              "valueThreshold": {
+                "lowerBound": 0.8
+              },
+              "changeThreshold": {
+                "absolute": -0.001,
+                "direction": "HIGHER_IS_BETTER"
+              }
+            }
+          }
+        ],
+        "modelNames": [
+          "candidate",
+          "baseline"
+        ]
+      }
+    ]
+  },
+  "version": "0.52.0",
+  "dataLocation": "<user provided PCollection>",
+  "fileFormat": "<unknown>",
+  "modelLocations": {
+    "baseline": "output/HarmanM-pipeline/Trainer/model/7/Format-Serving",
+    "candidate": "output/HarmanM-pipeline/Trainer/model/24/Format-Serving"
+  }
+}

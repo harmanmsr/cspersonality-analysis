@@ -11,7 +11,7 @@ PIPELINE_NAME = "HarmanM-pipeline"
 # pipeline inputs
 DATA_ROOT = "data"
 TRANSFORM_MODULE_FILE = os.path.join("modules", "marketing_transform.py")
-# TUNER_MODULE_FILE = os.path.join("modules", "marketing_tuner.py")
+TUNER_MODULE_FILE = os.path.join("modules", "marketing_tuner.py")
 TRAINER_MODULE_FILE = os.path.join("modules", "marketing_trainer.py")
 # requirement_file = os.path.join(root, "requirements.txt")
  
@@ -51,10 +51,10 @@ if __name__ == "__main__":
     components = init_components(
         DATA_ROOT,
         transform_module=TRANSFORM_MODULE_FILE,
-        # tuner_module=TUNER_MODULE_FILE,
+        tuner_module=TUNER_MODULE_FILE,
         training_module=TRAINER_MODULE_FILE,
-        training_steps=1000,
-        eval_steps=200,
+        training_steps=720,
+        eval_steps=180,
         serving_model_dir=serving_model_dir,
     )
 
