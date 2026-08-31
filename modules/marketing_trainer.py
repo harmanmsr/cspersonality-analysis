@@ -8,6 +8,7 @@ import tensorflow_transform as tft
 from tensorflow_transform.tf_metadata import schema_utils
 from tfx.components.trainer.fn_args_utils import FnArgs
 from tfx_bsl.public import tfxio
+import keras_tuner as kt
 
 LABEL_KEY = 'Response'
 
@@ -43,7 +44,15 @@ def _input_fn(file_pattern, tf_transform_output, batch_size=64):
     return dataset
 
 
-def _build_keras_model():
+def _build_keras_model(hparams: kt.HyperParameters = None):
+    """Bangun model DNN. Jika `hparams` diberikan (hasil komponen Tuner),
+    arsitektur memakai unit/dropout/learning_rate terbaik hasil pencarian.
+    Jika tidak, jatuh ke nilai default sebagai fallback."""
+    units_1 = hparams.get('units_1') if hparams else 64
+    units_2 = hparams.get('units_2') if hparams else 32
+    dropout = hparams.get('dropout') if hparams else 0.3
+    learning_rate = hparams.get('learning_rate') if hparams else 1e-3
+
     numeric_inputs = {
         transformed_name(f): tf.keras.Input(shape=(1,), name=transformed_name(f))
         for f in NUMERIC_FEATURES
@@ -64,16 +73,16 @@ def _build_keras_model():
         cat_embeddings.append(emb)
 
     concat = tf.keras.layers.Concatenate()([numeric_concat] + cat_embeddings)
-    x = tf.keras.layers.Dense(64, activation='relu')(concat)
-    x = tf.keras.layers.Dropout(0.3)(x)
-    x = tf.keras.layers.Dense(32, activation='relu')(x)
+    x = tf.keras.layers.Dense(units_1, activation='relu')(concat)
+    x = tf.keras.layers.Dropout(dropout)(x)
+    x = tf.keras.layers.Dense(units_2, activation='relu')(x)
     output = tf.keras.layers.Dense(1, activation='sigmoid')(x)
 
     inputs = {**numeric_inputs, **categorical_inputs}
     model = tf.keras.Model(inputs=inputs, outputs=output)
     model.compile(
         loss='binary_crossentropy',
-        optimizer=tf.keras.optimizers.Adam(learning_rate=1e-3),
+        optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate),
         metrics=[tf.keras.metrics.BinaryAccuracy(), tf.keras.metrics.AUC(name='auc')])
     return model
 
@@ -98,7 +107,11 @@ def run_fn(fn_args: FnArgs):
     train_dataset = _input_fn(fn_args.train_files, tf_transform_output, batch_size=64)
     eval_dataset = _input_fn(fn_args.eval_files, tf_transform_output, batch_size=64)
 
-    model = _build_keras_model()
+    hparams = None
+    if fn_args.hyperparameters:
+        hparams = kt.HyperParameters.from_config(fn_args.hyperparameters)
+
+    model = _build_keras_model(hparams)
 
     callbacks = [
         tf.keras.callbacks.EarlyStopping(monitor='val_auc', mode='max', patience=3, restore_best_weights=True)
