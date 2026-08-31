@@ -16,7 +16,7 @@ from tfx.components import (
     SchemaGen,
     ExampleValidator,
     Transform,
-    Tuner,
+    # Tuner,
     Trainer,
     Evaluator,
     Pusher,
@@ -33,7 +33,7 @@ from tfx.types.standard_artifacts import Model, ModelBlessing
 def init_components(
     data_dir: Text,
     transform_module: Text,
-    tuner_module: Text,
+    # tuner_module: Text,
     training_module: Text,
     training_steps: int,
     eval_steps: int,
@@ -87,14 +87,14 @@ def init_components(
     )
 
     # 6. Tuner — hyperparameter search (KerasTuner RandomSearch)
-    tuner = Tuner(
-        module_file=tuner_module,
-        examples=transform.outputs["transformed_examples"],
-        transform_graph=transform.outputs["transform_graph"],
-        schema=schema_gen.outputs["schema"],
-        train_args=trainer_pb2.TrainArgs(splits=["train"], num_steps=training_steps),
-        eval_args=trainer_pb2.EvalArgs(splits=["eval"], num_steps=eval_steps),
-    )
+    # tuner = Tuner(
+    #     module_file=tuner_module,
+    #     examples=transform.outputs["transformed_examples"],
+    #     transform_graph=transform.outputs["transform_graph"],
+    #     schema=schema_gen.outputs["schema"],
+    #     train_args=trainer_pb2.TrainArgs(splits=["train"], num_steps=training_steps),
+    #     eval_args=trainer_pb2.EvalArgs(splits=["eval"], num_steps=eval_steps),
+    # )
 
     # 7. Trainer — training model final memakai hyperparameter terbaik dari Tuner
     trainer = Trainer(
@@ -102,7 +102,7 @@ def init_components(
         examples=transform.outputs["transformed_examples"],
         transform_graph=transform.outputs["transform_graph"],
         schema=schema_gen.outputs["schema"],
-        hyperparameters=tuner.outputs["best_hyperparameters"],
+        # hyperparameters=tuner.outputs["best_hyperparameters"],
         train_args=trainer_pb2.TrainArgs(splits=["train"], num_steps=training_steps),
         eval_args=trainer_pb2.EvalArgs(splits=["eval"], num_steps=eval_steps),
     )
@@ -163,7 +163,7 @@ def init_components(
         schema_gen,
         example_validator,
         transform,
-        tuner,
+        # tuner,
         trainer,
         model_resolver,
         evaluator,
