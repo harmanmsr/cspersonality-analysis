@@ -138,8 +138,6 @@ tempCodeRunnerFile.py
 
 # TFX pipeline run artifacts (metadata, component outputs) —
 # regenerated every run, shouldn't live in git
-HarmanM-pipeline/
-pipeline_root/
 .metadata/
 *.db
 *.sqlite

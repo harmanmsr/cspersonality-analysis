@@ -1,0 +1,44 @@
+{
+  "evalConfig": {
+    "modelSpecs": [
+      {
+        "labelKey": "Response"
+      }
+    ],
+    "slicingSpecs": [
+      {}
+    ],
+    "metricsSpecs": [
+      {
+        "metrics": [
+          {
+            "className": "ExampleCount"
+          },
+          {
+            "className": "AUC"
+          },
+          {
+            "className": "BinaryAccuracy"
+          },
+          {
+            "className": "BinaryAccuracy",
+            "threshold": {
+              "valueThreshold": {
+                "lowerBound": 0.5
+              }
+            }
+          }
+        ],
+        "modelNames": [
+          ""
+        ]
+      }
+    ]
+  },
+  "version": "0.52.0",
+  "dataLocation": "<user provided PCollection>",
+  "fileFormat": "<unknown>",
+  "modelLocations": {
+    "": "HarmanM-pipeline/Trainer/model/7/Format-Serving"
+  }
+}
